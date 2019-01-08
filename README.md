@@ -20,5 +20,5 @@ https://www.transifex.com/jumei/gitkraken-i18n/
 
 ## Install
 ```bash
-sudo npm i github:gucong3000/gitkraken-i18n -g
+sudo npm i gitkraken-i18n -g
 ```
