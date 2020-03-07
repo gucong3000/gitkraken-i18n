@@ -39,13 +39,13 @@ const local = require("./local");
 		await asar.extractAll(originalAsar.path, appDir);
 	}
 
-	await zhConvert();
+	// await zhConvert();
 	await crack(appDir);
-	await local(appDir);
+	// await local(appDir);
 
 	if (opts.pack) {
 		console.log("Packaging " + appDir);
-		await util.promisify(asar.createPackageWithOptions)(appDir, patchedAsar, {
+		await asar.createPackageWithOptions(appDir, patchedAsar, {
 			unpack: "{*.node,*.pdb,*.exe,*.dll,THIRD-PARTY-LICENSES.txt,.DS_Store}",
 			dot: true,
 		});

@@ -5,16 +5,7 @@ const path = require("path");
 const asar = require("asar");
 const os = require("os");
 
-const download = require("./download");
-
-process.on("unhandledRejection", (reason, p) => {
-	console.error(reason);
-	if (!process.exitCode) {
-		process.exitCode = 1;
-	}
-});
-
-async function findAsarPosix (dirs) {
+async function findRootPosix (dirs) {
 	if (process.platform !== "win32") {
 		dirs.unshift.apply(
 			dirs,
@@ -33,25 +24,26 @@ async function findAsarPosix (dirs) {
 		dirs = Array.from(new Set(dirs));
 	}
 
-	const asar = (process.platform === "darwin" ? "R" : "r") + "esources/app.asar";
+	const resources = (process.platform === "darwin" ? "R" : "r") + "esources";
 
 	dirs = dirs.map(dir => (
-		path.join(dir, asar)
+		path.join(dir, resources)
 	));
 
 	for (let i = 0; i < dirs.length; i++) {
 		try {
-			return {
-				version: getAsarVersion(dirs[i]),
-				path: dirs[i],
-			};
+			return await getRootInfo(dirs[i]);
 		} catch (ex) {
-			//
+			try {
+				return getAsarInfo(dirs[i]);
+			} catch (ex) {
+				//
+			}
 		}
 	}
 }
 
-async function findAsarWin32 () {
+async function findRootWin32 () {
 	const appDataLocal = process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData/Local");
 	const gitkrakenLocal = path.join(appDataLocal, "gitkraken");
 	let items;
@@ -76,18 +68,18 @@ async function findAsarWin32 () {
 		path.join(gitkrakenLocal, app)
 	));
 
-	return findAsarPosix(items);
+	return findRootPosix(items);
 }
 
-function findAsarDarwin () {
-	return findAsarPosix([
+function findRootDarwin () {
+	return findRootPosix([
 		"/Applications/GitKraken.app/Contents",
 	]);
 }
 
-function findAsarLinux () {
+function findRootLinux () {
 	// https://support.gitkraken.com/how-to-install#centos-6-7-rhel-fedora
-	return findAsarPosix([
+	return findRootPosix([
 		// Debian & Ubuntu,
 		"/usr/share/gitkraken",
 		"/usr/share/GitKraken",
@@ -97,59 +89,44 @@ function findAsarLinux () {
 	]);
 }
 
-const findAsarFns = {
-	win32: findAsarWin32,
-	darwin: findAsarDarwin,
-	linux: findAsarLinux,
+const findRootFns = {
+	win32: findRootWin32,
+	darwin: findRootDarwin,
+	linux: findRootLinux,
 };
 
-async function findAsar () {
-	const findAsarFn = findAsarFns[process.platform];
-	assert.ok(findAsarFn, "This platform is not supported!");
+async function findRoot () {
+	const findRootFn = findRootFns[process.platform];
+	assert.ok(findRootFn, "This platform is not supported!");
 
-	do {
-		const asarPath = await findAsarFn();
-		if (asarPath) {
-			return asarPath;
-		}
-		await download();
-	} while (1);
+	return findRootFn();
 }
 
-let asarPromise;
+let rootPromise;
 
-function getAsarVersion (asarFile) {
-	return JSON.parse(asar.extractFile(asarFile, "package.json")).version;
+async function getRootInfo (resources) {
+	const appRoot = path.join(resources, "app");
+	const pkg = await fs.readJson(path.join(appRoot, "package.json"));
+	return {
+		path: appRoot,
+		version: pkg.version
+	};
+}
+
+function getAsarInfo (resources) {
+	const asarFile = path.join(resources, "app.asar");
+	return {
+		asar: asarFile,
+		path: asarFile + ".unpacked",
+		version: JSON.parse(asar.extractFile(asarFile, "package.json")).version
+	};
 }
 
 module.exports = async () => {
-	if (!asarPromise) {
-		asarPromise = findAsar();
+	if (!rootPromise) {
+		rootPromise = findRoot();
 	}
-	const originalAsar = await asarPromise;
+	const originalAsar = await rootPromise;
 	assert.ok(originalAsar, "Can not find GitKraken");
-	const originalAsarBak = originalAsar.path + ".bak";
-	const appDir = originalAsar.path.replace(/\.\w+$/, "");
-
-	try {
-		await fs.remove(appDir);
-	} catch (ex) {
-		if (ex.code !== "ENOENT") {
-			throw ex;
-		}
-	}
-
-	try {
-		if (getAsarVersion(originalAsarBak) === originalAsar.version) {
-			await fs.copyFile(originalAsarBak, originalAsar.path);
-		}
-	} catch (ex) {
-		try {
-			await fs.copyFile(originalAsar.path, originalAsarBak);
-		} catch (ex) {
-			//
-		}
-	}
-
 	return originalAsar;
 };

@@ -3,6 +3,45 @@ const fs = require("fs-extra");
 const path = require("path");
 
 const patches = {
+	"static/mode.js": (contents) => {
+		return contents.replace(/^(module\.exports\s*=\s*)(['"])\w+\2/m, (s, prefix, quot) => {
+			console.log(`-${s.trim()}`);
+			s = `${prefix}${quot}development${quot}`;
+			console.log(`+${s.trim()}`);
+			return s;
+		});
+	},
+	"static/clientType.js": (contents) => {
+		return contents.replace(/^(module\.exports\s*=\s*)(['"])\w+\2/m, (s, prefix, quot) => {
+			console.log(`-${s.trim()}`);
+			s = `${prefix}${quot}STANDALONE${quot}`;
+			console.log(`+${s.trim()}`);
+			return s;
+		});
+	},
+	// "static/startMainProcess.js": (contents) => {
+	// 	return contents.replace(/^(\s*)snapshotResult\.setGlobals\(.+\r?\n(?:.+\r?\n)*?\s*snapshotResult\.customRequire\(.*/gm, (s, space) => {
+	// 		let lines = s.split(/\r?\n/g);
+	// 		lines = [
+	// 			lines[0],
+	// 			`${space}snapshotResult.customRequire.cache['edm-d/src/d.js']={exports:async()=>({expiresAt:8640000000000000,quantity:Number.MAX_SAFE_INTEGER,subscriber:{name:'KillWolfVlad'}})};`,
+	// 			lines[lines.length - 1],
+	// 		];
+	// 		s = lines.join("\n");
+	// 		console.log(` ${lines[0].trim()}`);
+	// 		console.log(`+${lines[1].trim()}`);
+	// 		console.log(` ${lines[2].trim()}`);
+	// 		return s;
+	// 	});
+	// },
+	// "static/index.js": (contents) => {
+	// 	return contents.replace(/^(\(\s*function\s*\(\s*\)\s*\{)[^\r\n]*/m, (s, prefix) => {
+	// 		console.log(`-${s.trim()}`);
+	// 		s = `${prefix} (()=>{const xhrPromiseRedux=snapshotResult.customRequire('xhr-promise-redux/dist/index.js');xhrPromiseRedux._post=xhrPromiseRedux.post;xhrPromiseRedux.post=async(url,options)=>{const res=await xhrPromiseRedux._post(url,options);if(url.match(/https:\/\/.*api.gitkraken.com\/phone-home/)){res.body.availableTrialDays=null;res.body.code=0;res.body.features=[];res.body.individualAccessState=null;res.body.licenseExpiresAt=8640000000000000;res.body.licensedFeatures=['pro'];res.body.proAccessState=null;}return res;};})();`
+	// 		console.log(`+${s.trim()}`);
+	// 		return s;
+	// 	});
+	// },
 	"src/js/components/views/SettingsView.js": (contents) => {
 		let settingFunctions = contents.match(/\s+settingFunctions:.+?("|')ui.theme\1.*/);
 		if (settingFunctions) {
@@ -87,7 +126,7 @@ const patches = {
 		});
 	},
 	"src/css/shared.css": (contents) => {
-		return contents.replace(/(\s+\.tier-label\s*\{\s*)width:\s*\d+\w+\s*(?=;|\})/ig, (s, prefix, size) => {
+		return contents.replace(/(\s+\.tier-label\s*\{\s*)width:\s*\d+\w+\s*(?=;|\})/ig, (s, prefix) => {
 			console.log(`${prefix.trim()}\n-\t${s.slice(prefix.length)}`);
 			s = `${prefix}padding: 0 5px`;
 			console.log("+\tpadding: 0 5px");
