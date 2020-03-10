@@ -49,7 +49,7 @@ const getAppRoot = require("./getAppRoot");
 	// await outputFile("static/mode.js", "module.exports = 'production';");
 	// await outputFile("static/mode.js", "module.exports = 'development';");
 
-	async function updateFile(filePath, callback) {
+	async function updateFile (filePath, callback) {
 		filePath = path.join(appRoot.path, filePath);
 		let content;
 		try {
@@ -66,7 +66,7 @@ const getAppRoot = require("./getAppRoot");
 	// function outputFile(filePath, content) {
 	// 	return fs.writeFile(path.join(appRoot.path, filePath), content);
 	// }
-	function copyFile(source, destination) {
+	function copyFile (source, destination) {
 		return fs.copyFile(source, path.join(appRoot.path, destination));
 	}
 })();

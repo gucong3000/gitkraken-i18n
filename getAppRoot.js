@@ -109,7 +109,7 @@ async function getRootInfo (resources) {
 	const pkg = await fs.readJson(path.join(appRoot, "package.json"));
 	return {
 		path: appRoot,
-		version: pkg.version
+		version: pkg.version,
 	};
 }
 
@@ -118,7 +118,7 @@ function getAsarInfo (resources) {
 	return {
 		asar: asarFile,
 		path: asarFile + ".unpacked",
-		version: JSON.parse(asar.extractFile(asarFile, "package.json")).version
+		version: JSON.parse(asar.extractFile(asarFile, "package.json")).version,
 	};
 }
 

@@ -15,7 +15,6 @@
 https://www.transifex.com/jumei/gitkraken-i18n/
 
 ## Requirement
-- [Git](https://git-scm.com/downloads)
 - [Node.js](https://nodejs.org/zh-cn/download/)
 
 ## Install

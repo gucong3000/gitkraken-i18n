@@ -20,7 +20,7 @@ const zhSymbolMap = {
 	"!": "！",
 	".": "。",
 	"?": "？",
-}
+};
 
 try {
 	const OpenCC = require("opencc");
@@ -29,7 +29,7 @@ try {
 	//
 }
 
-(async() => {
+(async () => {
 	const appRoot = await getAppRoot();
 	en = await fs.readJson(path.join(appRoot.path, "src/strings.json"));
 
@@ -38,7 +38,7 @@ try {
 		if (
 			semver.gt(
 				appRoot.version,
-				enLocal.languageOption.version,
+				enLocal.languageOption.version
 			)
 		) {
 			assignLang(enLocal, en);
@@ -58,15 +58,15 @@ try {
 				await got(
 					`https://${
 						await inGfw.net()
-						? "raw.github.cnpmjs.org"
-						: "raw.githubusercontent.com"
+							? "raw.github.cnpmjs.org"
+							: "raw.githubusercontent.com"
 					}/megos/gitkraken-i18n/master/ja/strings.json`)
 			).body
 		)
 	);
 	ja.languageOption = {
 		label: "日本語",
-		value: "ja"
+		value: "ja",
 	};
 	await writeJson("strings/ja.json", ja);
 
@@ -74,13 +74,13 @@ try {
 		await fs.readJson("strings/zh-cn.json"),
 		(text, item, key) => {
 			const html = en[item][key].match(reHTML);
-			if(text === en[item][key] || !/\p{Ideographic}/u.test(text)) {
+			if (text === en[item][key] || !/\p{Ideographic}/u.test(text)) {
 				console.log(en[item][key]);
 				return;
 			}
 			text = text
-				.replace(/(\p{Ideographic}) +([\{\(\[\w])/gu, "$1$2")
-				.replace(/([\w\)\}\]]) +(\p{Ideographic})/gu, "$1$2")
+				.replace(/(\p{Ideographic}) +([{([\w])/gu, "$1$2")
+				.replace(/([\w)}\]]) +(\p{Ideographic})/gu, "$1$2")
 				.replace(/你/g, "您")
 				.replace(/存储库/g, "储存库")
 				.replace(/GitKraken Pro/g, "GitKraken专业版")
@@ -88,22 +88,22 @@ try {
 				.replace(/("|') *(.*?) *\1/g, "“$2”")
 				.replace(
 					/(\d+)?(\.+)( *)(\w+)?/gm,
-					(s, leftContext, dot, spaces, rightContext) => leftContext || dot.length > 1 || rightContext && !spaces ? s : "。"
+					(s, leftContext, dot, spaces, rightContext) => leftContext || dot.length > 1 || (rightContext && !spaces) ? s : "。"
 				)
 				.replace(
-					/([,:!\?]+) */ug,
+					/([,:!?]+) */ug,
 					(s, symbol) => zhSymbolMap[symbol] || s
 				);
-				if (html) {
-					let i = 0;
-					text = text.replace(reHTML, () => html[i++]);
-				}
-				return text;
+			if (html) {
+				let i = 0;
+				text = text.replace(reHTML, () => html[i++]);
+			}
+			return text;
 		}
 	);
 	zhCN.languageOption = {
 		label: "中文(简体)",
-		value: "zh-cn"
+		value: "zh-cn",
 	};
 	await writeJson("strings/zh-cn.json", zhCN);
 
@@ -120,19 +120,19 @@ try {
 	);
 	zhTW.languageOption = {
 		label: "中文(正體)",
-		value: "zh-tw"
+		value: "zh-tw",
 	};
 	await writeJson("strings/zh-tw.json", zhTW);
 })();
 
-function writeJson(filePath, content) {
+function writeJson (filePath, content) {
 	if (typeof content !== "object" || content instanceof Buffer) {
 		content = JSON.parse(content);
 	}
 	Object.keys(content).forEach(item => {
 		const itemMap = {};
 		Object.keys(content[item]).sort((a, b) => {
-			return a.replace(/\W+/g, "").localeCompare(b.replace(/\W+/g, ""))
+			return a.replace(/\W+/g, "").localeCompare(b.replace(/\W+/g, ""));
 		}).forEach(key => {
 			itemMap[key] = content[item][key];
 		});
@@ -142,31 +142,30 @@ function writeJson(filePath, content) {
 		filePath,
 		content,
 		{
-			spaces: "\t"
+			spaces: "\t",
 		}
 	);
 }
 
-function assignLang(a, b) {
+function assignLang (a, b) {
 	Object.keys(b).slice(1).forEach(item => {
 		Object.assign(a[item], b[item]);
 	});
 	return a;
 }
 
-function updateTranslate(oldLocal, translate) {
+function updateTranslate (oldLocal, translate) {
 	const newLocal = {
-		languageOption: oldLocal.languageOption
-	}
-	let i = 0;
+		languageOption: oldLocal.languageOption,
+	};
 
 	Object.keys(en).slice(1).forEach(item => {
 		newLocal[item] = {};
 		Object.keys(en[item]).forEach(key => {
 			newLocal[item][key] = oldLocal[item][key] || en[item][key];
-			if(!/^en-us$/i.test(newLocal.languageOption.value) && /\&\w/.test(key)) {
+			if (!/^en-us$/i.test(newLocal.languageOption.value) && /&\w/.test(key)) {
 				const shortcut = `(${RegExp.lastMatch.toLocaleUpperCase()})`;
-				newLocal[item][key] = newLocal[item][key].replace(/[（\(]&\w+[\)）]/g, "").replace(/\.*$/u, s => shortcut + s);
+				newLocal[item][key] = newLocal[item][key].replace(/[（(]&\w+[)）]/g, "").replace(/\.*$/u, s => shortcut + s);
 			}
 			if (translate) {
 				newLocal[item][key] = translate(newLocal[item][key], item, key) || newLocal[item][key];

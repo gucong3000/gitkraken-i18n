@@ -4,7 +4,6 @@ const sudo = require("./sudo");
 const fs = require("fs-extra");
 const asar = require("asar");
 const path = require("path");
-const util = require("util");
 
 const getOriginalAsar = require("./originalAsar");
 const zhConvert = require("./zhConvert");
@@ -39,9 +38,9 @@ const local = require("./local");
 		await asar.extractAll(originalAsar.path, appDir);
 	}
 
-	// await zhConvert();
+	await zhConvert();
 	await crack(appDir);
-	// await local(appDir);
+	await local(appDir);
 
 	if (opts.pack) {
 		console.log("Packaging " + appDir);
