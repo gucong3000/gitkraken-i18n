@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 "use strict";
 const fs = require("fs-extra");
 const path = require("path");
@@ -5,6 +6,7 @@ const os = require("os");
 
 const platform = require("./platform");
 const spawn = require("./spawn");
+require("./handledRejection");
 
 const URLS = {
 	win32: `https://release.gitkraken.com/${platform}/GitKrakenSetup.exe`,
@@ -85,6 +87,7 @@ async function download () {
 	console.log(`Downloading GitKraken from ${url}`);
 	await spawn([
 		"curl",
+		"--ssl-no-revoke",
 		"--fail",
 		"--insecure",
 		"--location",
@@ -99,6 +102,9 @@ async function download () {
 	});
 
 	console.log(`Installing Gitkraken ${fileName}`);
+	if (platform !== "win32") {
+		await fs.chmod(fileName, 0o777);
+	}
 	await INSTS[process.platform](fileName);
 	await fs.unlink(fileName);
 }

@@ -4,6 +4,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const asar = require("asar");
 const os = require("os");
+require("./handledRejection");
 
 async function findRootPosix (dirs) {
 	if (process.platform !== "win32") {
@@ -102,8 +103,6 @@ async function findRoot () {
 	return findRootFn();
 }
 
-let rootPromise;
-
 async function getRootInfo (resources) {
 	const appRoot = path.join(resources, "app");
 	const pkg = await fs.readJson(path.join(appRoot, "package.json"));
@@ -123,10 +122,7 @@ function getAsarInfo (resources) {
 }
 
 module.exports = async () => {
-	if (!rootPromise) {
-		rootPromise = findRoot();
-	}
-	const originalAsar = await rootPromise;
-	assert.ok(originalAsar, "Can not find GitKraken");
-	return originalAsar;
+	const root = await findRoot();
+	assert.ok(root, "Can not find GitKraken");
+	return root;
 };

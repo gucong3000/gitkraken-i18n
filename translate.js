@@ -7,13 +7,23 @@ const path = require("path");
 const semver = require("semver");
 
 const getAppRoot = require("./getAppRoot");
+let OpenCC;
+let opencc;
+try {
+	OpenCC = require("opencc");
+} catch (ex) {
+	// console.error(ex);
+}
+if (OpenCC) {
+	opencc = new OpenCC("s2twp.json");
+}
 
 const reHTML = /<(\w+)\b[^>]+>.*?<\/\1>/g;
 let en;
 let ja;
 let zhCN;
 let zhTW;
-let opencc;
+
 const zhSymbolMap = {
 	",": ",",
 	":": "：",
@@ -23,8 +33,6 @@ const zhSymbolMap = {
 };
 
 try {
-	const OpenCC = require("opencc");
-	opencc = new OpenCC("s2twp.json");
 } catch (ex) {
 	//
 }
@@ -75,7 +83,9 @@ try {
 		(text, item, key) => {
 			const html = en[item][key].match(reHTML);
 			if (text === en[item][key] || !/\p{Ideographic}/u.test(text)) {
-				console.log(en[item][key]);
+				if (!(text === "GitKraken" || text === "Chipotle" || /^[A-Z]+$/.test(text) || /^(?:\w+)?(?:\.\w+)+$/.test(text) || /^<%=.*%>$/.test(text))) {
+					console.log(text);
+				}
 				return;
 			}
 			text = text
@@ -108,7 +118,7 @@ try {
 	await writeJson("strings/zh-cn.json", zhCN);
 
 	// https://bintray.com/package/files/byvoid/opencc/OpenCC
-	// opencc -i "strings/zh-cn.json" -o "strings/zh-tw.json" -c s2twp.json
+	// d:\Apps\opencc-1.0.1-win64\opencc -i "strings/zh-cn.json" -o "strings/zh-tw.json" -c d:\Apps\opencc-1.0.1-win64\s2twp.json
 	zhTW = updateTranslate(
 		await fs.readJson("strings/zh-tw.json"),
 		(text, item, key) => {
@@ -125,6 +135,10 @@ try {
 	await writeJson("strings/zh-tw.json", zhTW);
 })();
 
+function normalizationKeyName (str) {
+	return str.replace(/(\w*)(\W+)(\w*)/, "$1$3$2");
+}
+
 function writeJson (filePath, content) {
 	if (typeof content !== "object" || content instanceof Buffer) {
 		content = JSON.parse(content);
@@ -132,7 +146,7 @@ function writeJson (filePath, content) {
 	Object.keys(content).forEach(item => {
 		const itemMap = {};
 		Object.keys(content[item]).sort((a, b) => {
-			return a.replace(/\W+/g, "").localeCompare(b.replace(/\W+/g, ""));
+			return normalizationKeyName(a).localeCompare(normalizationKeyName(b));
 		}).forEach(key => {
 			itemMap[key] = content[item][key];
 		});
@@ -169,6 +183,9 @@ function updateTranslate (oldLocal, translate) {
 			}
 			if (translate) {
 				newLocal[item][key] = translate(newLocal[item][key], item, key) || newLocal[item][key];
+			}
+			if (newLocal[item][key] === en[item][key]) {
+				delete newLocal[item][key];
 			}
 		});
 	});

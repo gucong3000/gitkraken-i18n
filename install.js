@@ -3,70 +3,111 @@
 const fs = require("fs-extra");
 const path = require("path");
 const asar = require("asar");
-
+const os = require("os");
+const osLocale = require("os-locale");
 const getAppRoot = require("./getAppRoot");
+const download = require("./download");
+const sudo = require("./sudo");
 
-;(async () => {
-	const appRoot = await getAppRoot();
+let appRoot;
 
+function copyFile (source) {
+	return fs.copyFile(source, path.join(appRoot.path, source));
+}
+
+async function readLocale (lang) {
+	let locale;
+	try {
+		locale = await fs.readJson(`strings/${lang}.json`);
+	} catch (ex) {
+		if (/-\w+$/.test(lang)) {
+			locale = await readLocale(lang.slice(0, -RegExp.lastMatch.length));
+		}
+	}
+	return locale;
+}
+
+async function updateFile (filePath, callback) {
+	filePath = path.join(appRoot.path, filePath);
+	let content;
+	try {
+		content = await fs.readFile(filePath);
+	} catch (ex) {
+		return;
+	}
+	content = await callback(content.toString());
+	if (content) {
+		return fs.writeFile(filePath, content);
+	}
+}
+
+async function patch () {
 	if (appRoot.asar) {
-		const appDir = appRoot.asar.replace(/(?:\.\w+)+$/, "");
-		const asarFile = appRoot.asar;
-		console.log(`Extracting\t${asarFile} ->, ${appDir}`);
-		await asar.extractAll(asarFile, appDir);
+		appRoot.path = appRoot.asar.replace(/(?:\.\w+)+$/, "");
+		console.log(`Extracting\t${appRoot.asar} -> ${appRoot.path}`);
+		asar.extractAll(appRoot.asar, appRoot.path);
 	}
 
-	// C:\Users\gucon\AppData\Roaming\.gitkraken\config
-	// profileGuid
-	// C:\Users\gucon\AppData\Roaming\.gitkraken\profiles\d6e5a8ca26e14325a4275fc33b17e16f\profile
-	// ui
-	// language
+	const dataDir = path.join(
+		process.platform === "win32"
+			? process.env.APPDATA
+			: os.homedir(),
+		".gitkraken"
+	);
 
-	await copyFile("strings/zh-CN.json", "src/strings.json");
-	await copyFile("static/crack.js", "static/crack.js");
-	// return
-	// await updateFile(
-	// 	"static/startMainProcess.js",
-	// 	js =>
-	// 		/^\s*require("\.\/crack.js");?$/m.test(js)
-	// 		? js
-	// 		: js.replace(
-	// 			/^([\t ]*)snapshotResult\.setGlobals\(.*$/m,
-	// 			(s, spaces) => `${s}\n${spaces}require("./crack.js");`
-	// 		)
-	// );
+	let lang;
+	try {
+		lang = (
+			await fs.readJson(
+				path.join(
+					dataDir,
+					`profiles/${
+						(await fs.readJson(
+							path.join(dataDir, "config")
+						)).profileGuid
+					}/profile`
+				)
+			)
+		).ui.language;
+	} catch (ex) {
+		lang = (await osLocale()).toLowerCase();
+	}
+
+	await updateFile("src/strings.json", async en => {
+		en = JSON.parse(en);
+		const locale = await readLocale(lang);
+		if (locale && !/^en(?:-US)$/i.test(locale)) {
+			Object.keys(en).slice().forEach(item => {
+				Object.assign(en[item], locale[item]);
+			});
+			return JSON.stringify(en, 0, "\t");
+		}
+	});
+
 	await updateFile(
 		"static/index.js",
 		js => /\brequire\(\s*(["'])\.\/crack(?:\.\w+)?\1\)/m.test(js)
-			? js
+			? null
 			: js.replace(
 				/^([\t ]*)const Perf/m,
 				(s, spaces) => `${spaces}require('./crack');\n${s}`
 			)
 	);
+	await copyFile("static/crack.js");
+}
 
-	// await outputFile("static/clientType.js", "module.exports = 'ENTERPRISE';");
-	// await outputFile("static/mode.js", "module.exports = 'production';");
-	// await outputFile("static/mode.js", "module.exports = 'development';");
-
-	async function updateFile (filePath, callback) {
-		filePath = path.join(appRoot.path, filePath);
-		let content;
-		try {
-			content = await fs.readFile(filePath);
-		} catch (ex) {
-			return;
-		}
-		content = callback(content.toString()) || content;
-		// console.log(content);
-		// return
-		return fs.writeFile(filePath, content);
+async function init () {
+	try {
+		appRoot = await getAppRoot();
+	} catch (ex) {
+		console.error(ex);
+		await download();
+		return init();
 	}
+}
 
-	// function outputFile(filePath, content) {
-	// 	return fs.writeFile(path.join(appRoot.path, filePath), content);
-	// }
-	function copyFile (source, destination) {
-		return fs.copyFile(source, path.join(appRoot.path, destination));
-	}
+(async () => {
+	await sudo();
+	await init();
+	await patch();
 })();

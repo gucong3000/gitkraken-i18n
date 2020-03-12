@@ -1,5 +1,4 @@
 "use strict";
-require("exec-extra");
 const childProcess = require("child_process");
 
 function stdio (stdio, options) {

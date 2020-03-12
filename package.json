@@ -1,16 +1,14 @@
 {
   "name": "gitkraken-i18n",
-  "version": "4.2.1",
+  "version": "5.0.0",
   "description": "Unofficial GitKraken i18n project",
   "main": "index.js",
   "scripts": {
-    "build": "rm -rf lib *.tgz && babel src --out-dir lib && cp -r src/strings lib",
-    "start": "eclint fix src/**/* && node src/createPatch.js --no-pack --no-patch && electron app",
-    "create-patch": "rm -rf ./app ./app.asar* ./patches/*.patch && node src/createPatch.js",
+    "translate": "node translate.js",
+    "install": "node install.js",
     "lint:eclint": "eclint check $(git ls-files | grep -v \"\\.patch$\" | tee /tmp/git-files)",
     "lint:eslint": "eslint $(grep \"\\.js$\" /tmp/git-files)",
-    "test": "npm run lint:eclint && npm run lint:eslint",
-    "install": "node lib/install.js"
+    "test": "npm run lint:eclint && npm run lint:eslint"
   },
   "repository": {
     "type": "git",
@@ -24,10 +22,12 @@
   "homepage": "https://github.com/gucong3000/gitkraken-i18n#readme",
   "dependencies": {
     "fs-extra": "^8.1.0",
+    "os-locale": "^4.0.0",
     "semver": "^7.1.3"
   },
   "devDependencies": {
     "asar": "^2.1.0",
+    "eclint": "^2.8.1",
     "eslint": "^6.8.0",
     "eslint-config-standard": "^14.1.0",
     "eslint-plugin-import": "^2.20.1",
