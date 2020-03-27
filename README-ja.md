@@ -1,9 +1,9 @@
 # GitKraken-i18n
 [Gitkraken](https://www.gitkraken.com/download)非公式国際化プロジェクト
 
-[![Travis](https://img.shields.io/travis/gucong3000/gitkraken-i18n.svg?label=macOS)](https://travis-ci.org/gucong3000/gitkraken-i18n)
-[![AppVeyor](https://img.shields.io/appveyor/ci/gucong3000/gitkraken-i18n.svg?label=Windows)](https://ci.appveyor.com/project/gucong3000/gitkraken-i18n)
-[![CircleCI](https://img.shields.io/circleci/project/github/gucong3000/gitkraken-i18n.svg?label=Linux)](https://circleci.com/gh/gucong3000/gitkraken-i18n)
+[![NPM version](https://img.shields.io/npm/v/gitkraken-i18n.svg)](https://www.npmjs.com/package/gitkraken-i18n)
+[![Travis](https://img.shields.io/travis/gucong3000/gitkraken-i18n.svg)](https://travis-ci.org/gucong3000/gitkraken-i18n)
+[![AppVeyor](https://img.shields.io/appveyor/ci/gucong3000/gitkraken-i18n.svg)](https://ci.appveyor.com/project/gucong3000/gitkraken-i18n)
 
 ## Contents
 - [English](README.md)
@@ -15,7 +15,6 @@
 https://www.transifex.com/jumei/gitkraken-i18n/
 
 ## Requirement
-- [Git](https://git-scm.com/downloads)
 - [Node.js](https://nodejs.org/ja/download/)
 
 ## Install
