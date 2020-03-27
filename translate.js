@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 "use strict";
 const got = require("got");
-const inGfw = require("in-gfw");
 const fs = require("fs-extra");
 const path = require("path");
 const semver = require("semver");
@@ -63,12 +62,7 @@ try {
 	ja = updateTranslate(
 		JSON.parse(
 			(
-				await got(
-					`https://${
-						await inGfw.net()
-							? "raw.github.cnpmjs.org"
-							: "raw.githubusercontent.com"
-					}/megos/gitkraken-i18n/master/ja/strings.json`)
+				await got("https://github.com/megos/gitkraken-i18n/raw/master/ja/strings.json")
 			).body
 		)
 	);
